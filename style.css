@@ -12,13 +12,16 @@ body{
     justify-content: center;
     align-items: center;
     min-height: 100vh ;
-    background: rgb(171, 193, 27);
+    background: url('images/pexels-pixabay-267147.jpg') no-repeat;
 }
 
 .wrapper{
     width: 420px;
-    background: rgb(177, 177, 22);
+    background: url('images/d41b3247bdc557ea6b823581e4f8f547.jpg');
     color: #000;
+    border-radius: 10px;
+    padding: 30px 40px;
+    border: 2px solid rgba(0, 0, 0, .4);
 }
 
 .wrapper h1{
@@ -26,11 +29,10 @@ body{
     text-align: center;
 }
 
-.wrapper input-box{
+.wrapper .input-box{
     position: relative;
     width: 100%;
     height: 50px;
-    background-color: rgb(145, 102, 28);
     margin: 30px 0;
 }
 
@@ -40,30 +42,30 @@ body{
     background: transparent;
     border: none;
     outline: none;
-    border: 2px solid rgba(255, 255, 255, .2);
-    border-radius: 40px;
+    border: 5px solid rgba(255, 255, 255, .5);
+    border-radius: 10px;
     font-size: 16px;
-    color: #fff;
+    color: #333;
     padding: 20px 45px 20px 20px;
 
 }
 
 .input-box input::placeholder{
-    color: #fff;  
+    color: #333;  
 }
 
 .input-box i {
     position: absolute;
-    right: 20px;
-    top: 50%;
+    right: 10px;
+    top: 30%;
     transform: translate(-50%);
     font-size: 20px;
 }
 
-.wrapper btn{
+.wrapper .btn{
     width: 100%;
     height: 45px;
-    background: #fff;
+    background: #dbe51a;
     border: none;
     outline: none;
     border-radius: 40px;
@@ -72,4 +74,21 @@ body{
     font-size: 16px;
     color: #333;
     font-weight: 600;
+}
+
+.wrapper .register-link{
+    font-size: 14.5px;
+    text-align: center;
+    margin: 20px 0 15px;
+}
+
+.register-link p a{
+    color: #2c7400;
+    text-decoration: none;
+    font-weight: 600;
+    
+}
+
+.register-link p a:hover{
+    text-decoration: underline;
 }
