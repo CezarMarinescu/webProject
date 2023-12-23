@@ -16,7 +16,6 @@ function App() {
   const [historyTasks, setHistoryTasks] = useState([]);
   const [selectedSection, setSelectedSection] = useState('dashboard');
   const [isDetailedFormOpen, setDetailedFormOpen] = useState(false);
-  const [selectedTaskIndex, setSelectedTaskIndex] = useState(null);
   const [selectedName, setSelectedName] = useState('');
   const [isLoggedIn, setLoggedIn] = useState(false);
   const [isCreatingTask, setCreatingTask] = useState(false);
@@ -26,8 +25,22 @@ function App() {
     taskStatus: 'OPEN',
     selectedName: '',
   });
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState([
 
+  ]);
+  const [selectedTaskIndex, setSelectedTaskIndex] = useState(null);
+  const [showRegisterForm, setShowRegisterForm] = useState(false);
+  const [showLoginForm, setShowLoginForm] = useState(true);
+
+  const handleLoginLinkClick = () => {
+    setShowLoginForm(true);
+    setShowRegisterForm(false);
+  };
+
+  const handleRegisterLinkClick = () => {
+    setShowLoginForm(false);
+    setShowRegisterForm(true);
+  };
 
   const handleLoginChange = (e) => {
     const { name, value } = e.target;
@@ -39,7 +52,6 @@ function App() {
 
   const handleLoginSubmit = (e) => {
     e.preventDefault();
-    // Perform login logic using loginData
     console.log('Login submitted:', loginData);
     setLoggedIn(true);
   };
@@ -59,6 +71,9 @@ function App() {
     setLoggedIn(true);
   };
 
+
+  //CREATE A TASK AND PUT IT IN THE LIST
+
   const handleCreateTask = () => {
     setCreatingTask(true);
   };
@@ -71,20 +86,30 @@ function App() {
     }));
   };
   
-
   const handleTaskSubmit = (e) => {
     e.preventDefault();
-    // Perform logic to save the task data
     const newTask = {
       taskName: taskData.taskName,
       taskDescription: taskData.taskDescription,
       taskStatus: taskData.taskStatus,
       taskAllocatedUser: taskData.selectedName,
     };
-
-    setTasks((prevTasks) => [...prevTasks, newTask]); // Add the new task to the list
+    setTasks((prevTasks) => {
+      // Check if a task with the same name already exists
+      const existingTaskIndex = prevTasks.findIndex((task) => task.taskName === newTask.taskName);
+  
+      if (existingTaskIndex !== -1) {
+        // If exists, update the existing task
+        const updatedTasks = [...prevTasks];
+        updatedTasks[existingTaskIndex] = newTask;
+        return updatedTasks;
+      } else {
+        // If not exists, add the new task
+        return [...prevTasks, newTask];
+      }
+    });
     setCreatingTask(false);
-    // Additional logic to save the task data (e.g., API call, state update)
+    
   };
 
   const handleCloseTaskForm = () => {
@@ -92,20 +117,19 @@ function App() {
   };
 
   const handleDeleteTask = (index) => {
-    // Create a copy of the tasks array
+
     const updatedTasks = [...tasks];
-  
-    // Remove the task at the specified index
+
     updatedTasks.splice(index, 1);
   
-    // Update the state with the new tasks array
     setTasks(updatedTasks);
   };
+
+  /////////////////////////////////////////////////
 
   const handleOpenDetailedForm = (index) => {
     const selectedTask = tasks[index];
 
-  
   if (selectedTask.taskStatus === 'PENDING') {
     
     setTasks((prevTasks) =>
@@ -138,7 +162,6 @@ function App() {
       }
     })
   );
-
     setDetailedFormOpen(false);
   };
 
@@ -174,25 +197,71 @@ function App() {
           <main className="main-content">
             {selectedSection === 'dashboard' && (
               <section className="dashboard">
-                <h2>Dashboard</h2>
-                <ul>
-                  {tasks.map((task, index) => (
-                    <li key={index}>
-                      <strong>{task.taskName}</strong>
-                      <p>{task.taskDescription}</p>
-                      {task.taskAllocatedUser && <p>Allocated to: {task.taskAllocatedUser}</p>}
-                      <button
-                        className={`status-button ${task.taskStatus.toLowerCase()}`}
-                        onClick={() => handleOpenDetailedForm(index)}>   
-                        {/* COD PTR A FACE PENDINGUL SA NU MEARGA */}
-                        {/* onClick={() => task.taskStatus !== 'PENDING' && handleOpenDetailedForm(index)}>*/}
-                      {task.taskStatus} 
-                      </button>
-                      
-                      <button onClick={() => handleDeleteTask(index)}>Delete</button>
-                    </li>
-                  ))}
-                </ul>
+                <div className='dashboard-container' id='open-container'>
+                  <h3>OPEN</h3>
+                  <ul>
+                    {tasks.filter((task) => task.taskStatus === 'OPEN').map((task, index) => (      
+                        <li key={index}>
+                          <strong>{task.taskName}</strong>
+                          <p>{task.taskDescription}</p>
+                          {task.taskAllocatedUser && <p>Allocated to: {task.taskAllocatedUser}</p>}
+                          <button
+                            className={`status-button ${task.taskStatus.toLowerCase()}`}
+                            onClick={() => handleOpenDetailedForm(index)}>   
+                            {/* COD PTR A FACE PENDINGUL SA NU MEARGA */}
+                            {/* onClick={() => task.taskStatus !== 'PENDING' && handleOpenDetailedForm(index)}>*/}
+                          {task.taskStatus} 
+                          </button>
+                          
+                          <button onClick={() => handleDeleteTask(index)}>Delete</button>
+                        </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="dashboard-container" id="pending-container">
+                  <h3>PENDING</h3>
+                    <ul>
+                    {tasks.filter((task) => task.taskStatus === 'PENDING').map((task, index) => (    
+                      <li key={index}>
+                        <strong>{task.taskName}</strong>
+                        <p>{task.taskDescription}</p>
+                        {task.taskAllocatedUser && <p>Allocated to: {task.taskAllocatedUser}</p>}
+                        <button
+                          className={`status-button ${task.taskStatus.toLowerCase()}`}
+                          onClick={() => handleOpenDetailedForm(index)}>   
+                          {/* COD PTR A FACE PENDINGUL SA NU MEARGA */}
+                          {/* onClick={() => task.taskStatus !== 'PENDING' && handleOpenDetailedForm(index)}>*/}
+                        {task.taskStatus} 
+                        </button>
+                        
+                        <button onClick={() => handleDeleteTask(index)}>Delete</button>
+                      </li>
+                    ))}
+                    </ul>
+                </div>
+
+                <div className="dashboard-container" id="completed-container">
+                  <h3>COMPLETED</h3>
+                    <ul>
+                    {tasks.filter((task) => task.taskStatus === 'COMPLETED').map((task, index) => (    
+                      <li key={index}>
+                        <strong>{task.taskName}</strong>
+                        <p>{task.taskDescription}</p>
+                        {task.taskAllocatedUser && <p>Allocated to: {task.taskAllocatedUser}</p>}
+                        <button
+                          className={`status-button ${task.taskStatus.toLowerCase()}`}
+                          onClick={() => handleOpenDetailedForm(index)}>   
+                          {/* COD PTR A FACE PENDINGUL SA NU MEARGA */}
+                          {/* onClick={() => task.taskStatus !== 'PENDING' && handleOpenDetailedForm(index)}>*/}
+                        {task.taskStatus} 
+                        </button>
+                        
+                        <button onClick={() => handleDeleteTask(index)}>Delete</button>
+                      </li>
+                    ))}
+                    </ul>
+                </div>
               </section>
             )}
             {isCreatingTask && (
@@ -232,8 +301,7 @@ function App() {
                         onChange={handleTaskChange}
                       >
                         <option value="OPEN">Open</option>
-                        <option value="COMPLETED">Completed</option>
-                        <option value="PENDING">Pending</option>
+                        
                       </select>
                     </div>
                     <button className="create-btn" type="submit">Create Task</button>
@@ -298,7 +366,7 @@ function App() {
       ) : (
         <div className="wrapper">
           {/* Login Form */}
-          <form id="login-form" onSubmit={handleLoginSubmit}>
+          <form id="login-form" onSubmit={handleLoginSubmit} style={{ display: showLoginForm ? 'block' : 'none' }}>
             <h1>Arasaka Team</h1>
             <div className="input-box">
               <input
@@ -328,15 +396,15 @@ function App() {
             <div className="register-link">
               <p>
                 Don't have an account?{' '}
-                <a href="#" className="register-link2">
-                  Register here
-                </a>{' '}
+                <span className="register-link2" onClick={handleRegisterLinkClick}>
+                Register here
+                </span>{' '}
               </p>
             </div>
           </form>
         
           {/* Register Form */}
-          <form id="register-form" onSubmit={handleRegisterSubmit} style={{ display: 'none' }}>
+          <form id="register-form" onSubmit={handleRegisterSubmit} style={{ display: showRegisterForm ? 'block' : 'none'}}>
             <h1>Welcome to Arasaka Team!</h1>
             <div className="input-box">
               <input
@@ -377,9 +445,9 @@ function App() {
             <div className="register-link">
               <p>
                 Already have an account?{' '}
-                <a href="#" className="login-link2">
-                  Login here
-                </a>
+                <span className="login-link2" onClick={handleLoginLinkClick}>
+                Login here
+                </span>
               </p>
             </div>
           </form>
