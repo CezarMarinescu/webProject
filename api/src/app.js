@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express ();
-const { User } = require('./db/models/user'); // Adjust the relative path accordingly
-
+const { User } = require('./db/models/user');
+const { Task } = require('./db/models/task'); 
 app.use(express.json());
 
 
@@ -42,3 +42,27 @@ app.post("/register", async (req, res) => {
         res.status(500).send("Internal Server Error");
     }
 });
+
+
+app.post("/create-task", async (req, res) => {
+    const { title, description, status, allocatedToUserId, createdByUserId } = req.body;
+    console.log(req.body)
+    if (!title || !description || !status || !allocatedToUserId || !createdByUserId) {
+        return res.status(400).send("Bad Request");
+    }
+
+    try {
+        const newTask = await Task.create({
+            title: title,
+            description: description,
+            status: status,
+            allocatedToUserId: allocatedToUserId,
+            createdByUserId: createdByUserId
+        });
+
+        res.status(200).send("Task created successfully!");
+    } catch (error) {
+        console.log("Error creating task:", error);
+        res.status(500).send("Internal Server Error");
+    }
+}   );
