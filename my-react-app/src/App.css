@@ -12,12 +12,12 @@ body{
     justify-content: center;
     align-items: center;
     min-height: 100vh ;
-    background: url('D:/Faculta/AN 3 SEM 1/Web/Project/webProject/my-react-app/src/images/rage4me-cyberpunk-2077-city-scenes-02-15.jpg') no-repeat;
+    background: url('D:\Razvan\Facultate\web\webProject\my-react-app\src\images\rage4me-cyberpunk-2077-city-scenes-02-15.jpg') no-repeat;
 }
 
 .wrapper{
     width: 420px;
-    background: url('D:/Faculta/AN 3 SEM 1/Web/Project/webProject/my-react-app/src/images/d41b3247bdc557ea6b823581e4f8f547.jpg');    color: #000;
+    background: url('D:\Razvan\Facultate\web\webProject\my-react-app\src\images\d41b3247bdc557ea6b823581e4f8f547.jpg');    color: #000;
     color: #000;
     border-radius: 10px;
     padding: 30px 40px;

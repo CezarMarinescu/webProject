@@ -50,10 +50,33 @@ function App() {
     }));
   };
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
     console.log('Login submitted:', loginData);
-    setLoggedIn(true);
+  
+    try {
+      const response = await fetch('http://127.0.0.1:3001/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(loginData)
+      });
+  
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+  
+      const data = await response.json();
+      
+      console.log('Login response:', data);
+      // Here you can check if the user data is valid
+      if (data) {
+        setLoggedIn(true);
+      }
+    } catch (error) {
+      console.error('There has been a problem with your fetch operation:', error);
+    }
   };
 
   const handleRegisterChange = (e) => {
@@ -64,11 +87,34 @@ function App() {
     }));
   };
 
-  const handleRegisterSubmit = (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
-    
-    console.log('Register submitted:', registerData);
-    setLoggedIn(true);
+    console.log('Registration submitted:', registerData);
+  
+    try {
+      const response = await fetch('http://127.0.0.1:3001/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(registerData)
+      });
+  
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+  
+      const data = await response.ok;
+
+      if (data) {
+        setShowRegisterForm(false);
+        setShowLoginForm(true);
+        setLoggedIn(true);
+
+      }
+    } catch (error) {
+      console.error('There has been a problem with your fetch operation:', error);
+    }
   };
 
 

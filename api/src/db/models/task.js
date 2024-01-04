@@ -38,4 +38,8 @@ const Task = sequelize.define('Task', {
         timestamps: false
     });
 
+sequelize.sync()
+    .then(() => console.log('Task table has been successfully created, if one doesn\'t exist'))
+    .catch(error => console.log('This error occured', error));
+
 module.exports = { Task }; 
