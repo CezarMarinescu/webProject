@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css'; // Import your CSS file
 
 function App() {
@@ -20,17 +20,55 @@ function App() {
   const [isLoggedIn, setLoggedIn] = useState(false);
   const [isCreatingTask, setCreatingTask] = useState(false);
   const [taskData, setTaskData] = useState({
-    taskName: '',
-    taskDescription: '',
-    taskStatus: 'OPEN',
-    selectedName: '',
+    title: '',
+    description: '',
+    status: 'open',
+    allocatedToUserId: 3,
+    createdByUserId:3,
   });
-  const [tasks, setTasks] = useState([
+  const [userId, setUserId] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  
+  const [tasks, setTasks] = useState([]);
 
-  ]);
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchTasks();
+    }
+  }, [isLoggedIn, userId]);
+
+  
   const [selectedTaskIndex, setSelectedTaskIndex] = useState(null);
   const [showRegisterForm, setShowRegisterForm] = useState(false);
   const [showLoginForm, setShowLoginForm] = useState(true);
+  const arePropsEqual = (prevProps, nextProps) => {
+    // Only re-render if tasks, taskStatus, or isLoading changes
+    return prevProps.tasks === nextProps.tasks &&
+      prevProps.taskStatus === nextProps.taskStatus &&
+      prevProps.isLoading === nextProps.isLoading;
+  }
+
+
+  const fetchTasks = async () => {
+    console.log('Fetching tasks for user:', userId);
+  
+    setIsLoading(true); // Set isLoading to true before starting the fetch request
+  
+    try {
+      const response = await fetch(`http://localhost:3001/tasks?userId=${userId}`); // use userId state variable
+  
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      const text = await response.json();
+      console.log('Tasks:', text)
+      setTasks(text);
+    } catch (error) {
+      console.error('There has been a problem with your fetch operation:', error);
+    } finally {
+      setIsLoading(false); // Set isLoading to false after the fetch request is complete
+    }
+  };
 
   const handleLoginLinkClick = () => {
     setShowLoginForm(true);
@@ -70,7 +108,8 @@ function App() {
       const data = await response.json();
       
       console.log('Login response:', data);
-      // Here you can check if the user data is valid
+      setUserId(data.id);
+
       if (data) {
         setLoggedIn(true);
       }
@@ -120,58 +159,23 @@ function App() {
 
   //CREATE A TASK AND PUT IT IN THE LIST
 
-  const handleCreateTask = () => {
-    setCreatingTask(true);
-  };
+  const handleDeleteTask = async (taskId, index) => {
+    try {
+      const response = await fetch(`http://localhost:3001/delete-task/${taskId}`, {
+        method: 'DELETE',
+      });
 
-  const handleTaskChange = (e) => {
-    const { name, value } = e.target;
-    setTaskData((prevData) => ({
-      ...prevData,
-      [name]: value,
-    }));
-  };
-  
-  const handleTaskSubmit = (e) => {
-    e.preventDefault();
-    const newTask = {
-      taskName: taskData.taskName,
-      taskDescription: taskData.taskDescription,
-      taskStatus: taskData.taskStatus,
-      taskAllocatedUser: taskData.selectedName,
-    };
-    setTasks((prevTasks) => {
-      // Check if a task with the same name already exists
-      const existingTaskIndex = prevTasks.findIndex((task) => task.taskName === newTask.taskName);
-  
-      if (existingTaskIndex !== -1) {
-        // If exists, update the existing task
-        const updatedTasks = [...prevTasks];
-        updatedTasks[existingTaskIndex] = newTask;
-        return updatedTasks;
-      } else {
-        // If not exists, add the new task
-        return [...prevTasks, newTask];
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
       }
-    });
-    setCreatingTask(false);
-    
-  };
 
-  const handleCloseTaskForm = () => {
-    setCreatingTask(false);
-  };
-
-  const handleDeleteTask = (index) => {
-
-    const updatedTasks = [...tasks];
-
-    updatedTasks.splice(index, 1);
-  
-    setTasks(updatedTasks);
-  };
-
-  /////////////////////////////////////////////////
+      const updatedTasks = [...tasks];
+      updatedTasks.splice(index, 1);
+      setTasks(updatedTasks);
+    } catch (error) {
+      console.error('There has been a problem with your fetch operation:', error);
+    }
+};
 
   const handleOpenDetailedForm = (index) => {
     const selectedTask = tasks[index];
@@ -195,23 +199,6 @@ function App() {
   }
   };
 
-  const handleDetailedFormSubmit = (e) => {
-    e.preventDefault();
-    setTasks((prevTasks) =>
-    prevTasks.map((task, index) => {
-      if (index === selectedTaskIndex) {
-        const updatedTask = { ...task, taskAllocatedUser: selectedName, taskStatus: 'PENDING' };
-        console.log('Updated Task:', updatedTask);
-        return updatedTask;
-      } else {
-        return task;
-      }
-    })
-  );
-    setDetailedFormOpen(false);
-  };
-
-
   const handleNavigationClick = (section) => {
     setSelectedSection(section);
   };
@@ -219,172 +206,278 @@ function App() {
   
 
   const handleLogout = () => {
-    // Perform logout logic (e.g., reset state, redirect to login page)
     setLoggedIn(false);
   };
   
+  const TaskList = React.memo(({ tasks, taskStatus, handleOpenDetailedForm, handleDeleteTask, isLoading }) => {
+    const filteredTasks = tasks.filter((task) => task.status === taskStatus.toLowerCase());
+    console.log("Tasks", tasks)
+  
+    console.log(`Filtered tasks for status ${taskStatus}:`, filteredTasks);
+  
+    return (
+      <div className='dashboard-container' id={`${taskStatus.toLowerCase()}-container`}>
+        <h3>{taskStatus}</h3>
+        <ul>
+          {isLoading ? (
+            <p>Loading tasks...</p>
+          ) : (
+            filteredTasks.map((task, index) => (
+              <li key={index}>
+                <strong>{task.title}</strong>
+                <p>{task.description}</p>
+                {task.allocatedToUserId && <p>Allocated to: {task.allocatedToUserId}</p>}
+                <button
+                  className={`status-button ${task.status.toLowerCase()}`}
+                  onClick={() => task.status !== 'PENDING' && handleOpenDetailedForm(index)}
+                >
+                  {task.status}
+                </button>
+                <button onClick={() => handleDeleteTask(index)}>Delete</button>
+              </li>
+            ))
+          )}
+        </ul>
+      </div>
+    );
+  }, arePropsEqual);
+  
+  const Dashboard = ({ tasks, handleOpenDetailedForm, handleDeleteTask, isLoading }) => (
+    <section className="dashboard">
+      <TaskList tasks={tasks} taskStatus='OPEN' handleOpenDetailedForm={handleOpenDetailedForm} handleDeleteTask={handleDeleteTask} isLoading={isLoading} />
+      <TaskList tasks={tasks} taskStatus='PENDING' handleOpenDetailedForm={handleOpenDetailedForm} handleDeleteTask={handleDeleteTask} isLoading={isLoading} />
+      <TaskList tasks={tasks} taskStatus='COMPLETED' handleOpenDetailedForm={handleOpenDetailedForm} handleDeleteTask={handleDeleteTask} isLoading={isLoading} />
+    </section>
+  );
+  
+  const Navigation = ({ handleNavigationClick, handleLogout }) => (
+    <nav>
+      <ul>
+        <li onClick={() => handleNavigationClick('dashboard')}>Dashboard</li>
+        <li onClick={() => handleNavigationClick('history')}>History</li>
+        <li onClick={() => setCreatingTask(true)}> Create Task</li>
+        <li onClick={handleLogout}>Logout</li>
+      </ul>
+    </nav>
+  );
 
+  const LoginForm = ({ handleLoginSubmit, handleLoginChange, loginData, handleRegisterLinkClick, showLoginForm }) => (
+    <form id="login-form" onSubmit={handleLoginSubmit} style={{ display: showLoginForm ? 'block' : 'none' }}>
+      <h1>Arasaka Team</h1>
+      <div className="input-box">
+        <input
+          type="text"
+          placeholder="UserName"
+          name="username"
+          value={loginData.username}
+          onChange={handleLoginChange}
+          required
+        />
+        <i className='bx bxs-user'></i>
+      </div>
+      <div className="input-box">
+        <input
+          type="password"
+          placeholder="Password"
+          name="password"
+          value={loginData.password}
+          onChange={handleLoginChange}
+          required
+        />
+        <i className='bx bxs-lock-alt'></i>
+      </div>
+      <button type="submit" className="btn">
+        Login
+      </button>
+      <div className="register-link">
+        <p>
+          Don't have an account?{' '}
+          <span className="register-link2" onClick={handleRegisterLinkClick}>
+          Register here
+          </span>{' '}
+        </p>
+      </div>
+    </form>
+  );
+
+  const RegisterForm = ({ handleRegisterSubmit, handleRegisterChange, registerData, handleLoginLinkClick, showRegisterForm }) => (
+    <form id="register-form" onSubmit={handleRegisterSubmit} style={{ display: showRegisterForm ? 'block' : 'none' }}>
+      <h1>Arasaka Team</h1>
+      <div className="input-box">
+        <input
+          type="text"
+          placeholder="UserName"
+          name="username"
+          value={registerData.username}
+          onChange={handleRegisterChange}
+          required
+        />
+        <i className='bx bxs-user'></i>
+      </div>
+      <div className="input-box">
+        <input
+          type="password"
+          placeholder="Password"
+          name="password"
+          value={registerData.password}
+          onChange={handleRegisterChange}
+          required
+        />
+        <i className='bx bxs-lock-alt'></i>
+      </div>
+      <button type="submit" className="btn">
+        Register
+      </button>
+      <div className="login-link">
+        <p>
+          Already have an account?{' '}
+          <span className="login-link2" onClick={handleLoginLinkClick}>
+          Login here
+          </span>{' '}
+        </p>
+      </div>
+    </form>
+  );
+
+  const DetailedForm = ({ isDetailedFormOpen, selectedName, setSelectedName, setDetailedFormOpen }) => {
+    if (!isDetailedFormOpen) {
+      return null;
+    }
+  
+    return (
+      <div className="detailed-form-overlay">
+        <div className="detailed-form-wrapper">
+          <div className="header">
+            <h2>Detailed Form</h2>
+          </div>
+          <div>
+            <label htmlFor="selectedName">Select Name:</label>
+            <select
+              id="selectedName"
+              name="selectedName"
+              value={selectedName}
+              onChange={(e) => setSelectedName(e.target.value)}
+            >
+              {/* Predefined list of names */}
+              <option value="Walter">Wasslter</option>
+              <option value="Jade">Jade</option>
+              {/* Add more names as needed */}
+            </select>
+          </div>
+          {/* Add other detailed form content here */}
+          <button className="create-btn" type="submit">Submit</button>
+          <button className="close-btn" onClick={() => setDetailedFormOpen(false)}>Cancel</button>
+        </div>
+      </div>
+    );
+  };
+  const handleInputChange = (event) => {
+    const { name, value } = event.target;
+  
+    setTaskData((prevTaskData) => ({
+      ...prevTaskData,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+  
+    try {
+      const response = await fetch('http://localhost:3001/create-task', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(taskData),
+      });
+  
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+  
+      const message = await response.text();
+      console.log(message);
+  
+      // Reset the taskData state to clear the form fields.
+      setTaskData({});
+  
+      // Close the form.
+      setCreatingTask(false);
+    } catch (error) {
+      console.error('Error creating task:', error);
+    }
+  };
+  
+  const handleClose = () => {
+    // Close the form.
+    setCreatingTask(false);
+  
+    // Optionally, you can also reset the taskData state to clear the form fields.
+    setTaskData({});
+  };
+
+  const CreateTaskForm = ({ taskData, handleInputChange, handleSubmit, handleClose }) => (
+    <div className="createTask-overlay">
+      <div className="createTask-wrapper">
+        <div className="header">
+          <h2>Create Task</h2>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div>
+            <label htmlFor="title">Task Name:</label>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              value={taskData.title}
+              onChange={handleInputChange}
+              required
+            />
+          </div>
+          <div>
+            <label htmlFor="description">Task Description:</label>
+            <textarea
+              id="description"
+              name="description"
+              value={taskData.description}
+              onChange={handleInputChange}
+              required
+            ></textarea>
+          </div>
+          <div>
+            <label htmlFor="status">Task Status:</label>
+            <select
+              id="status"
+              name="status"
+              value={taskData.status}
+              onChange={handleInputChange}
+            >
+              <option value="OPEN">Open</option>
+              {/* Add more options as needed */}
+            </select>
+          </div>
+          <button className="create-btn" type="submit">Create Task</button>
+          <button className="close-btn" onClick={handleClose}>Cancel</button>
+        </form>
+      </div>
+    </div>
+  );
   return (
     <div>
       {isLoggedIn ? (
         <div className="homepage">
           <header>
-            <h1>Arasaka Team</h1>
-            <nav>
-              <ul>
-              <li onClick={() => handleNavigationClick('dashboard')}>Dashboard</li>
-              <li onClick={() => handleNavigationClick('history')}>History</li>
-              <li onClick={handleCreateTask}>Create Task</li>
-              <li onClick={handleLogout}>Logout</li>
-              </ul>
-            </nav>
-          </header>
+          <h1>Arasaka Team</h1>
+          <Navigation handleNavigationClick={handleNavigationClick} handleLogout={handleLogout} />
+        </header>
   
           <main className="main-content">
-            {selectedSection === 'dashboard' && (
-              <section className="dashboard">
-                <div className='dashboard-container' id='open-container'>
-                  <h3>OPEN</h3>
-                  <ul>
-                    {tasks.filter((task) => task.taskStatus === 'OPEN').map((task, index) => (      
-                        <li key={index}>
-                          <strong>{task.taskName}</strong>
-                          <p>{task.taskDescription}</p>
-                          {task.taskAllocatedUser && <p>Allocated to: {task.taskAllocatedUser}</p>}
-                          <button
-                            className={`status-button ${task.taskStatus.toLowerCase()}`}
-                            onClick={() => handleOpenDetailedForm(index)}>   
-                            {/* COD PTR A FACE PENDINGUL SA NU MEARGA */}
-                            {/* onClick={() => task.taskStatus !== 'PENDING' && handleOpenDetailedForm(index)}>*/}
-                          {task.taskStatus} 
-                          </button>
-                          
-                          <button onClick={() => handleDeleteTask(index)}>Delete</button>
-                        </li>
-                    ))}
-                  </ul>
-                </div>
-
-                <div className="dashboard-container" id="pending-container">
-                  <h3>PENDING</h3>
-                    <ul>
-                    {tasks.filter((task) => task.taskStatus === 'PENDING').map((task, index) => (    
-                      <li key={index}>
-                        <strong>{task.taskName}</strong>
-                        <p>{task.taskDescription}</p>
-                        {task.taskAllocatedUser && <p>Allocated to: {task.taskAllocatedUser}</p>}
-                        <button
-                          className={`status-button ${task.taskStatus.toLowerCase()}`}
-                          onClick={() => handleOpenDetailedForm(index)}>   
-                          {/* COD PTR A FACE PENDINGUL SA NU MEARGA */}
-                          {/* onClick={() => task.taskStatus !== 'PENDING' && handleOpenDetailedForm(index)}>*/}
-                        {task.taskStatus} 
-                        </button>
-                        
-                        <button onClick={() => handleDeleteTask(index)}>Delete</button>
-                      </li>
-                    ))}
-                    </ul>
-                </div>
-
-                <div className="dashboard-container" id="completed-container">
-                  <h3>COMPLETED</h3>
-                    <ul>
-                    {tasks.filter((task) => task.taskStatus === 'COMPLETED').map((task, index) => (    
-                      <li key={index}>
-                        <strong>{task.taskName}</strong>
-                        <p>{task.taskDescription}</p>
-                        {task.taskAllocatedUser && <p>Allocated to: {task.taskAllocatedUser}</p>}
-                        <button
-                          className={`status-button ${task.taskStatus.toLowerCase()}`}
-                          onClick={() => handleOpenDetailedForm(index)}>   
-                          {/* COD PTR A FACE PENDINGUL SA NU MEARGA */}
-                          {/* onClick={() => task.taskStatus !== 'PENDING' && handleOpenDetailedForm(index)}>*/}
-                        {task.taskStatus} 
-                        </button>
-                        
-                        <button onClick={() => handleDeleteTask(index)}>Delete</button>
-                      </li>
-                    ))}
-                    </ul>
-                </div>
-              </section>
-            )}
-            {isCreatingTask && (
-              <div className="createTask-overlay">
-                <div className = "createTask-wrapper">
-                  <form onSubmit={handleTaskSubmit}>
-                    <div className="header">
-                      <h2>Create Task</h2>
-                    </div>
-                    <div>
-                      <label htmlFor="taskName">Task Name:</label>
-                      <input
-                        type="text"
-                        id="taskName"
-                        name="taskName"
-                        value={taskData.taskName}
-                        onChange={handleTaskChange}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label htmlFor="taskDescription">Task Description:</label>
-                      <textarea
-                        id="taskDescription"
-                        name="taskDescription"
-                        value={taskData.taskDescription}
-                        onChange={handleTaskChange}
-                        required
-                      ></textarea>
-                    </div>
-                    <div>
-                      <label htmlFor="taskStatus">Task Status:</label>
-                      <select
-                        id="taskStatus"
-                        name="taskStatus"
-                        value={taskData.taskStatus}
-                        onChange={handleTaskChange}
-                      >
-                        <option value="OPEN">Open</option>
-                        
-                      </select>
-                    </div>
-                    <button className="create-btn" type="submit">Create Task</button>
-                    <button className="close-btn" onClick={handleCloseTaskForm}>Cancel</button>
-                  </form>
-                </div>
-              </div>
-            )}
-
-            {isDetailedFormOpen && (
-                <div className="detailed-form-overlay">
-                  <div className="detailed-form-wrapper">
-                    <form onSubmit={handleDetailedFormSubmit}>
-                      <div className="header">
-                        <h2>Detailed Form</h2>
-                      </div>
-                      <div>
-                        <label htmlFor="selectedName">Select Name:</label>
-                        <select
-                          id="selectedName"
-                          name="selectedName"
-                          value={selectedName}
-                          onChange={(e) => setSelectedName(e.target.value)}
-                        >
-                          {/* Predefined list of names */}
-                          <option value="Walter">Walter</option>
-                          <option value="Jade">Jade</option>
-                          {/* Add more names as needed */}
-                        </select>
-                      </div>
-                      {/* Add other detailed form content here */}
-                      <button className="create-btn" type="submit">Submit</button>
-                      <button className="close-btn" onClick={() => setDetailedFormOpen(false)}>Cancel</button>
-                    </form>
-                  </div>
-                </div>
-            )}
+          <Dashboard tasks={tasks} handleOpenDetailedForm={handleOpenDetailedForm} handleDeleteTask={handleDeleteTask} isLoading={isLoading} />
+            
+          {isCreatingTask && <CreateTaskForm taskData={taskData} handleInputChange={handleInputChange} handleSubmit={handleSubmit} handleClose={handleClose} />}
+          {/* {isCreatingTask && <CreateTaskForm taskData={taskData}/>} */}
+          <DetailedForm isDetailedFormOpen={isDetailedFormOpen} selectedName={selectedName} setSelectedName={setSelectedName} setDetailedFormOpen={setDetailedFormOpen} />
               
               {selectedSection === 'history' && (
                 <section className="History">
@@ -411,93 +504,9 @@ function App() {
         </div>
       ) : (
         <div className="wrapper">
-          {/* Login Form */}
-          <form id="login-form" onSubmit={handleLoginSubmit} style={{ display: showLoginForm ? 'block' : 'none' }}>
-            <h1>Arasaka Team</h1>
-            <div className="input-box">
-              <input
-                type="text"
-                placeholder="UserName"
-                name="username"
-                value={loginData.username}
-                onChange={handleLoginChange}
-                required
-              />
-              <i className='bx bxs-user'></i>
-            </div>
-            <div className="input-box">
-              <input
-                type="password"
-                placeholder="Password"
-                name="password"
-                value={loginData.password}
-                onChange={handleLoginChange}
-                required
-              />
-              <i className='bx bxs-lock-alt'></i>
-            </div>
-            <button type="submit" className="btn">
-              Login
-            </button>
-            <div className="register-link">
-              <p>
-                Don't have an account?{' '}
-                <span className="register-link2" onClick={handleRegisterLinkClick}>
-                Register here
-                </span>{' '}
-              </p>
-            </div>
-          </form>
-        
-          {/* Register Form */}
-          <form id="register-form" onSubmit={handleRegisterSubmit} style={{ display: showRegisterForm ? 'block' : 'none'}}>
-            <h1>Welcome to Arasaka Team!</h1>
-            <div className="input-box">
-              <input
-                type="text"
-                placeholder="UserName"
-                name="username"
-                value={registerData.username}
-                onChange={handleRegisterChange}
-                required
-              />
-              <i className='bx bxs-user'></i>
-            </div>
-            <div className="input-box">
-              <input
-                type="password"
-                placeholder="Password"
-                name="password"
-                value={registerData.password}
-                onChange={handleRegisterChange}
-                required
-              />
-              <i className='bx bxs-lock-alt'></i>
-            </div>
-            <div className="input-box">
-              <input
-                type="password"
-                placeholder="Confirm password"
-                name="confirmPassword"
-                value={registerData.confirmPassword}
-                onChange={handleRegisterChange}
-                required
-              />
-              <i className='bx bxs-lock-alt'></i>
-            </div>
-            <button type="submit" className="btn">
-              Register
-            </button>
-            <div className="register-link">
-              <p>
-                Already have an account?{' '}
-                <span className="login-link2" onClick={handleLoginLinkClick}>
-                Login here
-                </span>
-              </p>
-            </div>
-          </form>
-        </div>
+          <LoginForm handleLoginSubmit={handleLoginSubmit} handleLoginChange={handleLoginChange} loginData={loginData} handleRegisterLinkClick={handleRegisterLinkClick} showLoginForm={showLoginForm} />
+        <RegisterForm handleRegisterSubmit={handleRegisterSubmit} handleRegisterChange={handleRegisterChange} registerData={registerData} handleLoginLinkClick={handleLoginLinkClick} showRegisterForm={showRegisterForm} />
+      </div>
       )}
     </div>
   );

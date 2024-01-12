@@ -152,13 +152,13 @@ app.post("delete-task", async (req, res) => {
 }   );
 
 app.get("/tasks", async (req, res) => {
-    const userId = req.query.userId; // get user ID from query parameters
+    const userId = req.query.userId; 
     if (!userId) {
         return res.status(400).send("User ID is required");
     }
 
     try {
-        const tasks = await Task.find({ userId: userId }); // find tasks by user ID
+        const tasks = await Task.findAll({ where: { createdByUserId: userId } }); // find tasks by user ID
         res.status(200).json(tasks);
     } catch (error) {
         console.log("Error retrieving tasks:", error);
@@ -184,6 +184,27 @@ app.post("/set-role", async (req, res) => {
         res.status(200).send("Role set successfully!");
     } catch (error) {
         console.log("Error setting role:", error);
+        res.status(500).send("Internal Server Error");
+    }
+});
+
+app.delete("/delete-task", async (req, res) => {
+    const { taskId } = req.body;
+    if (!taskId) {
+        return res.status(400).send("Bad Request");
+    }
+
+    try {
+        const task = await Task.findById(taskId);
+        if (!task) {
+            return res.status(404).send("Task not found");
+        }
+
+        await task.destroy();
+
+        res.status(200).send("Task deleted successfully!");
+    } catch (error) {
+        console.log("Error deleting task:", error);
         res.status(500).send("Internal Server Error");
     }
 });
