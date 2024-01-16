@@ -105,51 +105,23 @@ app.post("/create-task", async (req, res) => {
 }   );
 
 
-app.post("update-task", async (req, res) => {
-    const { title, description, status, allocatedToUserId, createdByUserId } = req.body;
-    console.log(req.body)
-    if (!title || !description || !status || !allocatedToUserId || !createdByUserId) {
-        return res.status(400).send("Bad Request");
-    }
-
+app.put('/update-task/:taskId', async (req, res) => {
     try {
-        const newTask = await Task.update({
-            title: title,
-            description: description,
-            status: status,
-            allocatedToUserId: allocatedToUserId,
-            createdByUserId: createdByUserId
-        });
+        const task = await Task.findByPk(req.params.taskId);
+        if (!task) {
+            return res.status(404).send('Task not found');
+        }
 
-        res.status(200).send("Task updated successfully!");
+        task.status = req.body.status;
+        await task.save();
+
+        res.send('Task updated successfully');
     } catch (error) {
-        console.log("Error updating task:", error);
-        res.status(500).send("Internal Server Error");
+        console.error('Error updating task:', error);
+        res.status(500).send('Server error');
     }
-}   );
+});
 
-app.post("delete-task", async (req, res) => {
-    const { title, description, status, allocatedToUserId, createdByUserId } = req.body;
-    console.log(req.body)
-    if (!title || !description || !status || !allocatedToUserId || !createdByUserId) {
-        return res.status(400).send("Bad Request");
-    }
-
-    try {
-        const newTask = await Task.delete({
-            title: title,
-            description: description,
-            status: status,
-            allocatedToUserId: allocatedToUserId,
-            createdByUserId: createdByUserId
-        });
-
-        res.status(200).send("Task deleted successfully!");
-    } catch (error) {
-        console.log("Error deleting task:", error);
-        res.status(500).send("Internal Server Error");
-    }
-}   );
 
 app.get("/tasks", async (req, res) => {
     const userId = req.query.userId; 
@@ -158,7 +130,7 @@ app.get("/tasks", async (req, res) => {
     }
 
     try {
-        const tasks = await Task.findAll({ where: { createdByUserId: userId } }); // find tasks by user ID
+        const tasks = await Task.findAll({ where: { createdByUserId: userId } });
         res.status(200).json(tasks);
     } catch (error) {
         console.log("Error retrieving tasks:", error);
@@ -187,15 +159,14 @@ app.post("/set-role", async (req, res) => {
         res.status(500).send("Internal Server Error");
     }
 });
-
-app.delete("/delete-task", async (req, res) => {
-    const { taskId } = req.body;
+app.delete("/delete-task/:taskId", async (req, res) => {
+    const { taskId } = req.params;
     if (!taskId) {
         return res.status(400).send("Bad Request");
     }
 
     try {
-        const task = await Task.findById(taskId);
+        const task = await Task.findByPk(taskId);
         if (!task) {
             return res.status(404).send("Task not found");
         }
@@ -209,3 +180,30 @@ app.delete("/delete-task", async (req, res) => {
     }
 });
 
+
+app.get("/get-task/:userId/:index", async (req, res) => {
+    const { userId, index } = req.params;
+    
+    if (!userId || isNaN(index)) {
+        return res.status(400).send("Bad Request");
+    }
+
+    try {
+        let task;
+
+        if (index === '0') {
+            task = await Task.findOne({ where: { allocatedToUserId: userId } });
+        } else {
+            task = await Task.findOne({ where: { allocatedToUserId: userId, index: index } });
+        }
+
+        if (!task) {
+            return res.status(404).send("Task not found");
+        }
+
+        res.status(200).json(task);
+    } catch (error) {
+        console.log("Error retrieving task:", error);
+        res.status(500).send("Internal Server Error");
+    }
+});
