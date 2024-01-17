@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import TaskList from './TaskList';
-import { fetchTasks, updateTask } from '../utils/utils'; // import updateTask from utils
+import { fetchTasks, updateTask } from '../utils/utils'; 
 
 const Dashboard = ({ taskState, setTaskState, handleDeleteTask, uiState, setUiState, refreshDashboard, setRefreshDashboard, userId }) => {
 
@@ -12,16 +12,18 @@ const Dashboard = ({ taskState, setTaskState, handleDeleteTask, uiState, setUiSt
 
     const memoizedHandleDeleteTask = React.useCallback((taskId, index) => handleDeleteTask(taskId, index, setTaskState), [handleDeleteTask, setTaskState]);
 
-    const handleUpdateTask = async (taskId, newStatus) => {
-        await updateTask(taskId, newStatus);
+    const handleUpdateTask = async (userId, taskId, newStatus) => {
+  
+        await updateTask(userId, taskId, newStatus);
+        
         setRefreshDashboard(true);
-    };
+      };
 
     return (
         <section className="dashboard">
-            <TaskList tasks={taskState.tasks} taskStatus='OPEN' handleDeleteTask={memoizedHandleDeleteTask} handleUpdateTask={handleUpdateTask} isLoading={uiState.isLoading} />
-            <TaskList tasks={taskState.tasks} taskStatus='PENDING' handleDeleteTask={memoizedHandleDeleteTask} handleUpdateTask={handleUpdateTask} isLoading={uiState.isLoading} />
-            <TaskList tasks={taskState.tasks} taskStatus='COMPLETED' handleDeleteTask={memoizedHandleDeleteTask} isLoading={uiState.isLoading} />
+            <TaskList tasks={taskState.tasks} taskStatus='OPEN' userId={userId} handleDeleteTask={memoizedHandleDeleteTask} handleUpdateTask={handleUpdateTask} isLoading={uiState.isLoading} />
+            <TaskList tasks={taskState.tasks} taskStatus='PENDING' userId={userId} handleDeleteTask={memoizedHandleDeleteTask} handleUpdateTask={handleUpdateTask} isLoading={uiState.isLoading} />
+            <TaskList tasks={taskState.tasks} taskStatus='COMPLETED' userId={userId} handleDeleteTask={memoizedHandleDeleteTask} handleUpdateTask={handleUpdateTask} isLoading={uiState.isLoading} />
         </section>
     );
 };

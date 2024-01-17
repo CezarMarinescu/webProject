@@ -2,7 +2,7 @@ import React from 'react';
 import Task from './Task';
 import { arePropsEqual } from '../utils/utils';
   
-const TaskList = React.memo(({ tasks, taskStatus, handleDeleteTask, handleUpdateTask, isLoading }) => {
+const TaskList = React.memo(({ tasks, taskStatus, handleDeleteTask, handleUpdateTask, userId, isLoading }) => {
     const filteredTasks = tasks.filter((task) => task.status === taskStatus.toLowerCase());
   
     console.log(`Filtered tasks for status ${taskStatus}:`, filteredTasks);
@@ -16,6 +16,7 @@ const TaskList = React.memo(({ tasks, taskStatus, handleDeleteTask, handleUpdate
           ) : (
             filteredTasks.map((task, index) => (
               <Task
+                userId={userId}
                 key={index}
                 task={task}
                 index={index}

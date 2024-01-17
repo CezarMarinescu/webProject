@@ -58,6 +58,17 @@ const CreateTaskForm = ({ taskState, setTaskState, handleSubmit }) => (
             <option value="OPEN">Open</option>
           </select>
         </div>
+        <div>
+  <label htmlFor="allocateToUserId">Allocated to:</label>
+  <input
+    type="text"
+    id="allocateToUserId"
+    name="allocatedToUserId"
+    value={taskState.taskData.allocatedToUserId || ''}
+    onChange={(e) => handleInputChange(e, taskState, setTaskState)}
+    required
+  />
+</div>
         <button className="create-btn" type="submit">Create Task</button>
         <button className="close-btn" onClick={(e) => handleClose(e, taskState, setTaskState)}>Cancel</button>
       </form>

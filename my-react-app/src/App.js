@@ -6,6 +6,7 @@ import { fetchTasks } from './utils/utils';
 import Navigation, {handleNavigationClick}from './parts/Navigation';
 import CreateTaskForm from './parts/CreateTaskForm';
 // import DetailedForm from './parts/DetailedForm';
+import History from './parts/History';
 import RegisterForm from './parts/Register';
 import { handleDeleteTask, handleSubmit} from './parts/Task';
 import LoginForm, { handleLoginSubmit, handleLoginChange, handleRegisterLinkClick, handleRegisterSubmit, handleRegisterChange, handleLoginLinkClick, handleLogout } from './parts/Login';
@@ -25,6 +26,7 @@ function App() {
       confirmPassword: '',
     },
     userId: null,
+    role: null,
     isLoggedIn: false,
   });
   
@@ -88,6 +90,12 @@ function App() {
                   setRefreshDashboard={setRefreshDashboard} 
                 />
               }
+
+            {uiState.selectedSection === 'history' && (
+              <History
+                tasks={taskState.tasks}
+              />
+            )}
             </main>
             
           </div>

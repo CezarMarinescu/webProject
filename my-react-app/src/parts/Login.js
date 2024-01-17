@@ -45,7 +45,7 @@ export const handleLogout = (setUserState) => {
       const data = await response.json();
       
       console.log('Login response:', data);
-      setUserState(prevState => ({ ...prevState, userId: data.id, isLoggedIn: true }));
+      setUserState(prevState => ({ ...prevState, userId: data.id, role:data.role ,isLoggedIn: true }));
     } catch (error) {
       console.error('There has been a problem with your fetch operation:', error);
     }

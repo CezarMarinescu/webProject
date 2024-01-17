@@ -1,16 +1,17 @@
 
-export const updateTask = async (taskId, newStatus) => {
+export const updateTask = async (userId, taskId, newStatus) => {
+  console.log("USERID", userId)
     try {
       const response = await fetch(`http://localhost:3001/update-task/${taskId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: newStatus, userid: userId }),
       });
   
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        alert('You are not authorized to update this task');
       }
   
       const message = await response.text();

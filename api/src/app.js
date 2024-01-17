@@ -106,6 +106,17 @@ app.post("/create-task", async (req, res) => {
 
 
 app.put('/update-task/:taskId', async (req, res) => {
+
+    console.log("STATUS", req.body.status)
+
+    const { userid } = req.body;
+    console.log("USERID", userid)
+    const user = await User.findByPk(userid);
+
+    console.log("USER ROLE", user.role)
+    if (user.role !== 2 && req.body.status === 'history') {
+        return res.status(401).send('Unauthorized');
+    }
     try {
         const task = await Task.findByPk(req.params.taskId);
         if (!task) {
@@ -113,6 +124,7 @@ app.put('/update-task/:taskId', async (req, res) => {
         }
 
         task.status = req.body.status;
+        
         await task.save();
 
         res.send('Task updated successfully');
@@ -128,14 +140,24 @@ app.get("/tasks", async (req, res) => {
     if (!userId) {
         return res.status(400).send("User ID is required");
     }
-
+    const user = await User.findByPk(userId);
+    if (user.role === 2) {
+        try {
+            const tasks = await Task.findAll();
+            res.status(200).json(tasks);
+        } catch (error) {
+            console.log("Error retrieving tasks:", error);
+            res.status(500).send("Internal Server Error");
+        }
+    } else {
     try {
-        const tasks = await Task.findAll({ where: { createdByUserId: userId } });
+        const tasks = await Task.findAll({ where: { allocatedToUserId: userId } });
         res.status(200).json(tasks);
     } catch (error) {
         console.log("Error retrieving tasks:", error);
         res.status(500).send("Internal Server Error");
     }
+}
 });
 
 app.post("/set-role", async (req, res) => {

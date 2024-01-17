@@ -32,7 +32,7 @@ export const handleSubmit = async (event, taskData, setTaskState, setUiState, se
     title: taskData.title,
     description: taskData.description,
     status: taskData.status || 'open', 
-    allocatedToUserId: taskData.allocatedToUserId || 3, 
+    allocatedToUserId: taskData.allocatedToUserId, 
     createdByUserId: taskData.createdByUserId || 3, 
   };
   try {
@@ -62,12 +62,14 @@ export const handleSubmit = async (event, taskData, setTaskState, setUiState, se
 };
 
 
-const Task = React.memo(({ task, index, handleDeleteTask, handleUpdateTask }) => {
+const Task = React.memo(({ userId, task, index, handleDeleteTask, handleUpdateTask }) => {
   const handleStatusClick = () => {
     if (task.status === 'open') {
-      handleUpdateTask(task.id, 'pending');
+      handleUpdateTask(userId, task.id, 'pending');
     } else if (task.status === 'pending') {
-      handleUpdateTask(task.id, 'completed');
+      handleUpdateTask(userId, task.id, 'completed');
+    } else if (task.status === 'completed') {
+      handleUpdateTask(userId, task.id, 'history');
     }
   };
 
